@@ -1,13 +1,36 @@
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport"
-          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Document</title>
+    <title>User Profile</title>
 </head>
 <body>
+<h1>User Profile</h1>
+<p>Name: {{userProfile.name}}</p>
+<p>Bio: {{userProfile.bio}}</p>
+<p>Picture:</p>
+<img src="data:image/jpeg;base64,{{userProfile.picture}}" alt="User Picture">
+
+
+<h2>Edit Bio</h2>
+<form action="/profile/bio" method="post">
+    <textarea name="bio" rows="4" cols="50">{{userProfile.bio}}</textarea>
+    <br>
+    <input type="submit" value="Update Bio">
+</form>
+
+<h2>Change Profile Picture</h2>
+<form action="/profile/picture" method="post" enctype="multipart/form-data">
+    <input type="file" name="profilePicture" accept="image/*">
+    <br>
+    <input type="submit" value="Upload Picture">
+</form>
+
+<h2>Remove Profile Picture</h2>
+<form id="removePictureForm" action="/profile/picture/delete" method="post">
+    <input type="hidden" name="_method" value="DELETE">
+    <input type="submit" value="Remove Picture" onclick="return confirm('Are you sure you want to remove your profile picture?');">
+</form>
+
 
 </body>
 </html>
