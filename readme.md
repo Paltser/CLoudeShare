@@ -9,8 +9,14 @@
 • Run this SQL script in the terminal to create the database and table:Create the 'fileshare' database
 
 ```sql
-CREATE DATABASE IF NOT EXISTS fileshare; USE fileshare; 
-CREATE TABLE IF NOT EXISTS users ( id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL, pass VARCHAR(255) NOT NULL );
+CREATE DATABASE IF NOT EXISTS fileshare; USE fileshare;
+CREATE TABLE IF NOT EXISTS users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    picture LONGBLOB,
+    bio varchar(255)
+    )
 ```
 
 ## Usage
@@ -28,4 +34,3 @@ This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md
 - [NPM](https://www.npmjs.com/) for the package manager.
 - [Dotenv](https://www.npmjs.com/package/dotenv) for the environment variables.
 - [Bcrypt](https://www.npmjs.com/package/bcrypt) for the password hashing.
-- [Auth0](https://auth0.com/) for the authentication.
