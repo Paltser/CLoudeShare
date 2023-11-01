@@ -2,10 +2,6 @@
 
 • Run `npm install` to install the dependencies.
 
-• Run `npm start` to start the server.
-
-• Follow the URL `http://localhost:3000/` to access the site.
-
 • Run this SQL script in the terminal to create the database and table:Create the 'fileshare' database
 
 ```sql
@@ -18,6 +14,9 @@ CREATE TABLE IF NOT EXISTS users (
     bio varchar(255)
     )
 ```
+• Run `npm start` to start the server.
+
+• Follow the URL `http://localhost:3000/` to access the site.
 
 ## Usage
 
