@@ -1,36 +1,108 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>User Profile</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="profile.css">
+    <title>CloudeShare</title>
 </head>
 <body>
-<h1>User Profile</h1>
-<p>Name: {{userProfile.name}}</p>
-<p>Bio: {{userProfile.bio}}</p>
-<p>Picture:</p>
-<img src="data:image/jpeg;base64,{{userProfile.picture}}" alt="User Picture">
+<header>
+    <nav class="navbar">
+        <a href="/" class="nav-branding">CloudeShare</a>
+    </nav>
+</header>
 
+<div class="main-container">
+    <div id="user-profile-container">
+        <div id="user-picture-container" class="profile-image-container">
+            <h3 id="user-name" class="profile-info">{{userProfile.name}}</h3>
 
-<h2>Edit Bio</h2>
-<form action="/profile/bio" method="post">
-    <textarea name="bio" rows="4" cols="50">{{userProfile.bio}}</textarea>
-    <br>
-    <input type="submit" value="Update Bio">
-</form>
+            <img id="user-picture" class="profile-image" src="data:image/jpeg;base64,{{userProfile.picture}}"
+                 alt="User Picture">
+        </div>
+        <div id="user-info-container" class="profile-info-container">
+            <div id="user-info">
+                <div id="bio-container" class="bio-container">
+                    <p id="user-bio" class="profile-info">{{userProfile.bio}}</p>
+                    <i class="fas fa-pencil" id="edit-icon"></i>
+                </div>
+            </div>
+        </div>
 
-<h2>Change Profile Picture</h2>
-<form action="/profile/picture" method="post" enctype="multipart/form-data">
-    <input type="file" name="profilePicture" accept="image/*">
-    <br>
-    <input type="submit" value="Upload Picture">
-</form>
-
-<h2>Remove Profile Picture</h2>
-<form id="removePictureForm" action="/profile/picture/delete" method="post">
-    <input type="hidden" name="_method" value="DELETE">
-    <input type="submit" value="Remove Picture" onclick="return confirm('Are you sure you want to remove your profile picture?');">
-</form>
-
-
+        <form id="edit-bio-form" action="/profile/bio" method="post">
+            <textarea id="bio-textarea" name="bio" rows="4" cols="50">{{userProfile.bio}}</textarea>
+            <br>
+            <input type="submit" value="Update Bio">
+        </form>
+    </div>
+    <div id="change-picture-container" class="profile-action-container">
+        <h2 id="change-picture-title" class="section-heading">Change Profile Picture</h2>
+        <form id="change-picture-form" action="/profile/picture" method="post" enctype="multipart/form-data">
+            <label for="profile-picture-input" class="custom-file-upload">Choose File</label>
+            <input type="file" id="profile-picture-input" name="profilePicture" accept="image/*">
+            <br>
+            <input type="submit" value="Upload Picture" class="custom-file-upload">
+        </form>
+    </div>
+    <div id="remove-picture-container" class="profile-action-container">
+        <h2 id="remove-picture-title" class="section-heading">Remove Profile Picture</h2>
+        <form id="remove-picture-form" action="/profile/picture/delete" method="post">
+            <input type="hidden" name="_method" value="DELETE">
+            <input type="submit" value="Remove Picture"
+                   onclick="return confirm('Are you sure you want to remove your profile picture?');">
+        </form>
+    </div>
+</div>
 </body>
+<script>
+    document.getElementById("edit-icon").addEventListener("click", function () {
+        let form = document.getElementById("edit-bio-form");
+
+        if (form.style.display === "none" || form.style.display === "") {
+            form.style.display = "block";
+        } else {
+            form.style.display = "none";
+        }
+    });
+    document.getElementById("change-picture-form").addEventListener("submit", function (event) {
+        event.preventDefault(); // prevent the default form submission
+
+        // Get the form data
+        const formData = new FormData(this);
+
+        // Send the form data using Fetch API
+        fetch("/profile/picture", {
+            method: "POST",
+            body: formData,
+            headers: {
+                // Add any headers if needed, e.g., authorization token
+            },
+        })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+                    return response.json(); // Assuming the server responds with a JSON containing the updated image URL
+                })
+                .then(responseData => {
+                    // Handle the response data as needed (e.g., display a success message)
+                    console.log(responseData);
+
+                    // Update the profile picture on the page without refreshing
+                    const profilePictureElement = document.getElementById("profile-picture");
+                    profilePictureElement.src = responseData.updatedImageUrl; // Adjust the property accordingly
+                })
+                .catch(error => {
+                    // Handle errors (e.g., display an error message)
+                    console.error('Error:', error);
+                });
+
+        // Optionally, you can hide the form or show a loading indicator while waiting for the server response.
+    });
+
+
+
+</script>
+<script src="https://kit.fontawesome.com/be49346d7d.js" crossorigin="anonymous"></script>
 </html>

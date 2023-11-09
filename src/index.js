@@ -8,6 +8,7 @@ const mysql_connect = require('./mysql_connect'); // Require the database module
 const multer = require('multer');
 const storage = multer.memoryStorage(); // Use memory storage for file handling
 const sharp = require('sharp');
+const fs = require('fs');
 
 
 const upload = multer({storage: storage});
@@ -23,7 +24,6 @@ app.set('view engine', 'hbs');
 app.set('views', templatePath);
 app.use(express.urlencoded({extended: false}));
 app.use(methodOverride('_method'));
-
 
 
 app.use(
@@ -44,14 +44,25 @@ function isAuthenticated(req, res, next) {
     }
 }
 
-app.get('/', (req, res) => {
-    // Check if the user is authenticated
-    if (req.session.isAuthenticated) {
-        res.render('home');
-    } else {
-        res.redirect('/login');
-    }
-});
+async function insertLogEntry(text) {
+
+    const insertUserQuery = 'INSERT INTO app_log (date, text) VALUES (?, ?)';
+    const values = [new Date(), text];
+
+    mysql_connect.query(insertUserQuery, values, (err) => {
+        if (err) {
+            console.error('Error creating user:', err);
+        }
+    });
+    app.get('/', (req, res) => {
+        // Check if the user is authenticated
+        if (req.session.isAuthenticated) {
+            res.render('home');
+        } else {
+            res.redirect('/login');
+        }
+    });
+}
 
 app.get('/signup', (req, res) => {
     res.render('signup');
@@ -72,19 +83,27 @@ app.post('/signup', async (req, res) => {
     // Hash the password with the salt
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    // Store the salt and hashed password in MySQL
-    const insertUserQuery = 'INSERT INTO users (name, password) VALUES (?, ?)';
-    const values = [name, hashedPassword];
+    // Set a default profile picture (replace 'defaultPictureBuffer' with your actual default picture buffer)
+    const profilePictureData = 'src/img/pfp.jpg';
 
-    mysql_connect.query(insertUserQuery, values, (err) => {
-        if (err) {
-            console.error('Error creating user:', err);
-            res.send('Error creating user.');
-        } else {
-            req.session.isAuthenticated = true;
-            res.render('home');
-        }
-    });
+    sharp(profilePictureData)
+        .resize(128, 128)
+        .toBuffer()
+        .then((resizedData) => {
+            // Store the salt and hashed password in MySQL
+            const insertUserQuery = 'INSERT INTO users (name, password, picture) VALUES (?, ?, ?)';
+            const values = [name, hashedPassword, resizedData];
+
+            mysql_connect.query(insertUserQuery, values, (err) => {
+                if (err) {
+                    console.error('Error creating user:', err);
+                    res.send('Error creating user.');
+                } else {
+                    req.session.isAuthenticated = true;
+                    res.render('login');
+                }
+            });
+        });
 });
 
 app.post('/login', async (req, res) => {
@@ -133,8 +152,6 @@ app.get('/profile', (req, res) => {
         // Assuming you have the user's ID stored in the session
         const userId = req.session.userId;
 
-        console.log('User ID from session:', userId);
-
         // Fetch the user's profile data from the database
         const selectUserProfileQuery = 'SELECT * FROM users WHERE id = ?';
 
@@ -147,10 +164,10 @@ app.get('/profile', (req, res) => {
 
                 if (userProfile.picture) {
                     const pictureBase64 = userProfile.picture.toString('base64');
-                    res.render('profile', { userProfile: { ...userProfile, picture: pictureBase64 } });
+                    res.render('profile', {userProfile: {...userProfile, picture: pictureBase64}});
                 } else {
                     // Handle the case when there's no picture available
-                    res.render('profile', { userProfile });
+                    res.render('profile', {userProfile});
                 }
             } else {
                 res.status(404).send('User not found');
@@ -160,7 +177,6 @@ app.get('/profile', (req, res) => {
         res.redirect('/login');
     }
 });
-
 
 
 // bio stuff
@@ -185,6 +201,7 @@ app.get('/profile/bio', isAuthenticated, (req, res) => {
 });
 
 app.post('/profile/bio', isAuthenticated, (req, res) => {
+
     const userId = req.session.userId;
     const newBio = req.body.bio; // Assuming the bio is sent in the request body
 
@@ -200,23 +217,7 @@ app.post('/profile/bio', isAuthenticated, (req, res) => {
             res.redirect('/profile');
         }
     });
-});
-
-app.put('/profile/bio', isAuthenticated, (req, res) => {
-    const userId = req.session.userId;
-    const newBio = req.body.bio; // Assuming you send the new bio in the request body
-
-    // Update the user's bio in the database
-    const updateBioQuery = 'UPDATE users SET bio = ? WHERE id = ?';
-
-    mysql_connect.query(updateBioQuery, [newBio, userId], (err) => {
-        if (err) {
-            console.error('Error updating user bio:', err);
-            res.status(500).send('Error updating user bio.');
-        } else {
-            res.status(200).send('Bio updated successfully');
-        }
-    });
+    insertLogEntry('Kasutaja bio uuendamine õnnestus');
 });
 
 app.delete('/profile/bio', isAuthenticated, (req, res) => {
@@ -236,7 +237,6 @@ app.delete('/profile/bio', isAuthenticated, (req, res) => {
 });
 
 // picture stuff
-
 app.post('/profile/picture', isAuthenticated, upload.single('profilePicture'), (req, res) => {
     if (!req.file) {
         return res.status(400).send('Please select a valid image file.');
@@ -266,10 +266,10 @@ app.post('/profile/picture', isAuthenticated, upload.single('profilePicture'), (
             console.error('Error resizing image:', err);
             return res.status(500).send('Failed to resize profile picture.');
         });
+    insertLogEntry('Kasutaja pildi uuendamine õnnestus');
 });
 app.post('/profile/picture/delete', isAuthenticated, (req, res) => {
     const userId = req.session.userId;
-    console.log('kasutaja ' + userId)
     // Remove the user's profile picture in the database
     const deletePictureQuery = 'UPDATE users SET picture = NULL WHERE id = ?';
 
@@ -281,6 +281,7 @@ app.post('/profile/picture/delete', isAuthenticated, (req, res) => {
 
         res.status(200).send('Profile picture removed successfully.');
     });
+    insertLogEntry('Kasutaja pildi kustutamine õnnestus');
 });
 
 app.listen(3000, () => {

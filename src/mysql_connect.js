@@ -28,12 +28,28 @@ const loginSchema = `
         bio varchar(255)
         )`;
 
+const logSchema = `
+CREATE TABLE IF NOT EXISTS app_log (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  date DATETIME NOT NULL,
+  text TEXT NOT NULL
+)`;
+
+
 // Create the 'users' table if it doesn't exist
 db.query(loginSchema, (err) => {
     if (err) {
         console.error('Error creating table:', err);
     } else {
         console.log('Table "users" created or already exists');
+    }
+});
+
+db.query(logSchema, (err) => {
+    if (err) {
+        console.error('Error creating table:', err);
+    } else {
+        console.log('Table "app_log" created or already exists');
     }
 });
 
